@@ -5,6 +5,7 @@ from math import sin
 from threading import Thread
 from dimensional import *
 import time
+import copy
 import numpy as np
 WIDTH, HEIGHT = 640, 480
 
@@ -40,7 +41,7 @@ def rotateZ(point, elapsed):
     rotMatZ[1][1] = np.cos(elapsed)
 
     dot1 = np.matmul(point.coords(), rotMatZ)
-    return(Point(array=dot1))
+    return(Vertex(array=dot1))
 
 
 def rotateX(point, elapsed):
@@ -50,7 +51,7 @@ def rotateX(point, elapsed):
     rotMatX[2][2] = np.cos(elapsed/2)
 
     dot1 = np.matmul(point.coords(), rotMatX)
-    return(Point(array=dot1))
+    return(Vertex(array=dot1))
 
 
 def draw(mesh):
@@ -66,35 +67,44 @@ def draw(mesh):
             sttime = time.time()
         canvas.delete("all")
         increment = (secRun)
+        points_arr = [Vertex(vertex.coords()) for vertex in mesh.vertices]
+        # print(mesh.vertices)
+        for i, point in enumerate(points_arr):
+            rotatedPZ = Vertex(rotateZ(point, increment))
+            rotatedPX = Vertex(rotateX(rotatedPZ, increment))
+            points_arr[i] = rotatedPX
+            points_arr[i].z += 50
+            # print(i,points_arr[i])
+            # pass
         for polygon in mesh:
-            lines = polygon.lines
-            points = [twoPoints[0] for twoPoints in lines]
-            for i, point in enumerate(points):
-                rotatedPZ = Point(rotateZ(point, increment))
-                rotatedPX = Point(rotateX(rotatedPZ, increment))
-                points[i] = rotatedPX
-                points[i].z += 50
-            normal = Vector(lines[1].cross(lines[0]))
-            if(normal.dot(Point([0,0,-1]))<0):
-                for i, _ in enumerate(points):
-                    points[i] = np.matmul(points[i].coords(1), projMat)
-                    points[i] = Point(array=points[i][:3]/points[i][3])
+            lines = polygon.edges
+            points = []
+            for line in lines:
+                for i in line.index_arr:
+                    pnt = points_arr[i]
+                    points.append(Vertex(pnt.coords()))
+            normal = Vector(lines[0].cross(lines[1]))
+            if(normal.dot(Vertex([0, 0, -1])) < 0):
+                for i, point in enumerate(points):
+                    points[i] = np.matmul(point.coords(1), projMat)
+                    points[i] = Vertex(array=points[i][:3]/points[i][3])
                     points[i].x += 1
                     points[i].y += 1
                     points[i].x *= 0.5*WIDTH
                     points[i].y *= 0.5*HEIGHT
                 Lz = (int(abs(normal.z()*-1.0)*255),
-                    0,
-                    int(abs(normal.z()*-1.0)*255))
+                      0,
+                      int(abs(normal.z()*-1.0)*255))
                 color = '#%02x%02x%02x' % Lz
-                # canvas.create_polygon([[point.x, point.y]
-                                    # for point in points], fill=color)
+                canvas.create_polygon([[point.x, point.y]
+                                       for point in points], fill=color)
                 canvas.create_line([[point.x, point.y]
                                     for point in points], fill="#FFFFFF")
 
 
 polygons = Cube(side=25)
-#polygons.load(askopenfilename(initialdir="/"))
+# print(polygons.faces)
+# polygons.load(askopenfilename(initialdir="/"))
 t = Thread(target=draw, args=(polygons,))
 t.start()
 

@@ -1,7 +1,8 @@
+import copy
 import numpy as np
 
 
-class Point():
+class Vertex():
 
     def __init__(self, array=None):
         self.x, self.y, self.z = array
@@ -11,29 +12,29 @@ class Point():
         self.z *= 1.0
 
     def __add__(self, other):
-        if(isinstance(other, Point)):
-            return(Point([self.x+other.x, self.y+other.y, self.z+other.z]))
+        if(isinstance(other, Vertex)):
+            return(Vertex([self.x+other.x, self.y+other.y, self.z+other.z]))
 
-        return(Point([self.x+other, self.y+other, self.z+other]))
+        return(Vertex([self.x+other, self.y+other, self.z+other]))
 
     def __radd__(self, other):
-        if(isinstance(other, Point)):
-            return(Point([self.x+other.x, self.y+other.y, self.z+other.z]))
+        if(isinstance(other, Vertex)):
+            return(Vertex([self.x+other.x, self.y+other.y, self.z+other.z]))
         print(other)
 
-        return(Point([self.x+other, self.y+other, self.z+other]))
+        return(Vertex([self.x+other, self.y+other, self.z+other]))
 
     def __mul__(self, other):
-        if isinstance(other, Point):
-            return(Point([self.x*other.x, self.y*other.y, self.z*other.z]))
+        if isinstance(other, Vertex):
+            return(Vertex([self.x*other.x, self.y*other.y, self.z*other.z]))
 
-        return(Point([self.x*other, self.y*other, self.z*other]))
+        return(Vertex([self.x*other, self.y*other, self.z*other]))
 
     def __truediv__(self, other):
-        return(Point([self.x/other, self.y/other, self.z/other]))
+        return(Vertex([self.x/other, self.y/other, self.z/other]))
 
-    def __eq__(self, point):
-        return(self.x == point.x and self.y == point.y and self.z == point.z)
+    def __eq__(self, vertex):
+        return(self.x == vertex.x and self.y == vertex.y and self.z == vertex.z)
 
     def __iter__(self):
         self.iterer = iter([self.x, self.y, self.z])
@@ -64,186 +65,243 @@ class Point():
         else:
             return([self.x, self.y, self.z])
 
+    def __repr__(self) -> str:
+        return(f"({self.x},{self.y},{self.z})")
 
-class Line():
-    def __init__(self, point_arr=None):
-        self.points = point_arr
+
+class Edge():
+    def __init__(self, vertex_arr=None, index_arr=None):
+        self.vertices = vertex_arr
+        self.index_arr = index_arr
         self.iterer = None
 
-    def auto(self, point_arr):
-        pointsLen = len(point_arr)
-        linesArr = []
-        for i in range(pointsLen):
-            linesArr.append(
-                Line([point_arr[i % pointsLen], point_arr[(i+1) % pointsLen]]))
-        return(linesArr)
+    def auto(self, vertex_arr, index_arr):
+        verticesLen = len(vertex_arr)
+        edgesArr = []
+        for i in range(verticesLen):
+            edgesArr.append(
+                Edge([vertex_arr[i % verticesLen], vertex_arr[(i+1) % verticesLen]], [index_arr[i % verticesLen], index_arr[(i+1) % verticesLen]]))
+        return(edgesArr)
 
     def __iter__(self):
-        self.iterer = iter(self.points)
+        self.iterer = iter(self.vertices)
         return(self.iterer)
 
     def __next__(self):
         return(next(self.iterer))
 
     def __getitem__(self, index):
-        return(self.points[index])
+        return(self.vertices[index])
 
     def __mul__(self, other):
-        self.points[0].x *= other
-        self.points[0].y *= other
-        self.points[0].z *= other
-        self.points[1].x *= other
-        self.points[1].y *= other
-        self.points[1].z *= other
-        return(self)
+        newEdge = copy.deepcopy(self)
+        newEdge.vertices[0].x *= other
+        newEdge.vertices[0].y *= other
+        newEdge.vertices[0].z *= other
+        newEdge.vertices[1].x *= other
+        newEdge.vertices[1].y *= other
+        newEdge.vertices[1].z *= other
+        return(newEdge)
 
     def __truediv__(self, other):
-        self.points[0].x /= other
-        self.points[0].y /= other
-        self.points[0].z /= other
-        self.points[1].x /= other
-        self.points[1].y /= other
-        self.points[1].z /= other
-        return(self)
+        newEdge = copy.deepcopy(self)
+        newEdge.vertices[0].x /= other
+        newEdge.vertices[0].y /= other
+        newEdge.vertices[0].z /= other
+        newEdge.vertices[1].x /= other
+        newEdge.vertices[1].y /= other
+        newEdge.vertices[1].z /= other
+        return(newEdge)
 
     def dot(self, other):
-        Ax = self.points[1].x-self.points[0].x
-        Ay = self.points[1].y-self.points[0].y
-        Az = self.points[1].z-self.points[0].z
-        Bx = other.points[1].x-other.points[0].x
-        By = other.points[1].y-other.points[0].y
-        Bz = other.points[1].z-other.points[0].z
+        Ax = self.vertices[1].x-self.vertices[0].x
+        Ay = self.vertices[1].y-self.vertices[0].y
+        Az = self.vertices[1].z-self.vertices[0].z
+        Bx = other.vertices[1].x-other.vertices[0].x
+        By = other.vertices[1].y-other.vertices[0].y
+        Bz = other.vertices[1].z-other.vertices[0].z
         return(Ax*Bx+Ay*By+Az*Bz)
 
     def cross(self, other):
-        Ax = self.points[1].x-self.points[0].x
-        Ay = self.points[1].y-self.points[0].y
-        Az = self.points[1].z-self.points[0].z
-        Bx = other.points[1].x-other.points[0].x
-        By = other.points[1].y-other.points[0].y
-        Bz = other.points[1].z-other.points[0].z
-        cP=Point([Ay*Bz-Az*By, Az*Bx-Ax*Bz, Ax*By-Ay*Bx])
+        Ax = self.vertices[1].x-self.vertices[0].x
+        Ay = self.vertices[1].y-self.vertices[0].y
+        Az = self.vertices[1].z-self.vertices[0].z
+        Bx = other.vertices[1].x-other.vertices[0].x
+        By = other.vertices[1].y-other.vertices[0].y
+        Bz = other.vertices[1].z-other.vertices[0].z
+        cP = Vertex([Ay*Bz-Az*By, Az*Bx-Ax*Bz, Ax*By-Ay*Bx])
         return(cP)
 
+    def __repr__(self) -> str:
+        return(f"{self.vertices}")
+
     def length(self):
-        x1 = self.points[1].x-self.points[0].x
-        y1 = self.points[1].y-self.points[0].y
-        z1 = self.points[1].z-self.points[0].z
+        x1 = self.vertices[1].x-self.vertices[0].x
+        y1 = self.vertices[1].y-self.vertices[0].y
+        z1 = self.vertices[1].z-self.vertices[0].z
         return((x1**2+y1**2+z1**2)**0.5)
 
 
 class Vector():
-    def __init__(self, point):
-        self.point = point
+    def __init__(self, vertex):
+        self.vertex = vertex
         self.normalize()
 
     def normalize(self):
-        x, y, z = self.point.coords()
+        x, y, z = self.vertex.coords()
         length = (x*x+y*y+z*z)**0.5
         for i in range(3):
-            if(length>0):
-                self.point[i] = self.point[i]/length
+            if(length > 0):
+                self.vertex[i] = self.vertex[i]/length
 
     def x(self):
-        return(self.point.x)
+        return(self.vertex.x)
 
     def y(self):
-        return(self.point.y)
+        return(self.vertex.y)
 
     def z(self):
-        return(self.point.z)
+        return(self.vertex.z)
 
     def dot(self, other):
-        Ax, Ay, Az = self.point.coords()
+        Ax, Ay, Az = self.vertex.coords()
         Bx, By, Bz = other.coords()
 
         return(Ax*Bx+Ay*By+Az*Bz)
 
 
-class Polygon():
-    def __init__(self, lines_arr=[]):
-        self.lines = lines_arr
+class Face():
+    def __init__(self, edges_arr=[],):
+        self.edges = edges_arr
         self.iterer = None
 
-    def append(self, line):
-        self.lines.append(line)
+    def append(self, edge):
+        self.edges.append(edge)
 
     def __iter__(self):
-        self.iterer = iter(self.lines)
+        self.iterer = iter(self.edges)
         return(self.iterer)
 
     def __next__(self):
         return(next(self.iterer))
 
+    def __repr__(self) -> str:
+        return(f"{self.edges}")
+
 
 class Mesh():
 
-    def __init__(self, polygons=None):
-        self.polygons = polygons
-        self.iteTris = None
+    def __init__(self, faces=[], vertices=[]):
+        self.faces = faces
+        self.vertices = vertices
+        self.iterVar = None
 
     def load(self, obj):
         with open(obj, "r") as obj:
             arr = [l[:-1] for l in obj]
             length = len(arr)
-            self.polygons = []
-            points = []
+            self.faces = []
+            vertices = []
 
-            for index, line in enumerate(arr):
+            for index, edge in enumerate(arr):
                 if(index*100/length % 5 == 0):
                     print(f"{100*index/length}%")
-                line = line.split()
-                if(6 > len(line) > 1):
-                    if (line[0] == "v"):
-                        points.append(Point([float(o) for o in line[1:]])
-                                      )
-                    elif(line[0] == "vn"):
+                edge = edge.split()
+                if(6 > len(edge) > 1):
+                    if (edge[0] == "v"):
+                        vertices.append(Vertex([float(o) for o in edge[1:]])
+                                        )
+                    elif(edge[0] == "vn"):
                         pass
-                    elif(line[0] == "vt"):
+                    elif(edge[0] == "vt"):
                         pass
-                    elif(line[0] == "f"):
-                        p4l = [points[int(o[0])-1] for o in line[1:]]
-                        self.polygons.append(
-                            Polygon(Line().auto(p4l))
+                    elif(edge[0] == "f"):
+                        p4l = [vertices[int(o[0])-1] for o in edge[1:]]
+                        self.faces.append(
+                            Face(Edge().auto(p4l))
                         )
-            return(len(self.polygons))
+            return(len(self.faces))
 
     def __iter__(self):
-        self.iteTris = iter(self.polygons)
-        return(self.iteTris)
+        self.iterVar = iter(self.faces)
+        return(self.iterVar)
 
     def __next__(self):
-        return(next(self.iteTris))
+        return(next(self.iterVar))
+
+
+class Pyramid(Mesh):
+    def __init__(self, side=1):
+
+        self.faces = []
+        side *= 0.5
+        self.vertices = [
+            Vertex([-side, -side, -side]),  # 0 left, front, down
+            Vertex([-side, -side, +side]),  # 1 left, back, down
+            Vertex([+side, -side, -side]),  # 2 right, front, down
+            Vertex([+side, -side, +side]),  # 3 right, back, down
+            Vertex([0.0, +side, 0.0]),  # 4 top
+        ]
+        self.faces = [
+            Face(Edge().auto(
+                [self.vertices[0], self.vertices[2], self.vertices[3]], [0, 2, 3])),
+            Face(Edge().auto(
+                [self.vertices[0], self.vertices[3], self.vertices[1]], [0, 3, 1])),
+            Face(Edge().auto(
+                [self.vertices[0], self.vertices[4], self.vertices[2]], [0, 4, 2])),
+            Face(Edge().auto(
+                [self.vertices[2], self.vertices[4], self.vertices[3]], [2, 4, 3])),
+            Face(Edge().auto(
+                [self.vertices[3], self.vertices[4], self.vertices[1]], [3, 4, 1])),
+            Face(Edge().auto(
+                [self.vertices[1], self.vertices[4], self.vertices[0]], [1, 4, 0])),
+
+        ]
+
+        super().__init__(faces=self.faces, vertices=self.vertices)
 
 
 class Cube(Mesh):
 
     def __init__(self, side=1):
-        self.polygons = []
+        self.faces = []
         side *= 0.5
-        points = [
-            Point([-side, -side, -side]),
-            Point([-side, +side, -side]),
-            Point([+side, +side, -side]),
-            Point([+side, -side, -side]),
-            Point([-side, -side, +side]),
-            Point([-side, +side, +side]),
-            Point([+side, +side, +side]),
-            Point([+side, -side, +side])
+        self.vertices = [
+            Vertex([-side, -side, -side]),
+            Vertex([-side, +side, -side]),
+            Vertex([+side, +side, -side]),
+            Vertex([+side, -side, -side]),
+            Vertex([-side, -side, +side]),
+            Vertex([-side, +side, +side]),
+            Vertex([+side, +side, +side]),
+            Vertex([+side, -side, +side])
         ]
 
-        self.polygons = [
-            # Line cant have more than 2 points :)
-            Polygon(Line().auto([points[0], points[1], points[2]])),
-            Polygon(Line().auto([points[0], points[2], points[3]])),
-            Polygon(Line().auto([points[1], points[5], points[6]])),
-            Polygon(Line().auto([points[1], points[6], points[2]])),
-            Polygon(Line().auto([points[5], points[4], points[7]])),
-            Polygon(Line().auto([points[5], points[7], points[6]])),
-            Polygon(Line().auto([points[4], points[0], points[3]])),
-            Polygon(Line().auto([points[4], points[3], points[7]])),
-            Polygon(Line().auto([points[4], points[5], points[1]])),
-            Polygon(Line().auto([points[4], points[1], points[0]])),
-            Polygon(Line().auto([points[3], points[2], points[6]])),
-            Polygon(Line().auto([points[3], points[6], points[7]])),
+        self.faces = [
+            # Edge cant have more than 2 vertices :)
+            Face(Edge().auto(
+                [self.vertices[0], self.vertices[1], self.vertices[2]], [0, 1, 2])),
+            Face(Edge().auto(
+                [self.vertices[0], self.vertices[2], self.vertices[3]], [0, 2, 3])),
+            Face(Edge().auto(
+                [self.vertices[1], self.vertices[5], self.vertices[6]], [1, 5, 6])),
+            Face(Edge().auto(
+                [self.vertices[1], self.vertices[6], self.vertices[2]], [1, 6, 2])),
+            Face(Edge().auto(
+                [self.vertices[5], self.vertices[4], self.vertices[7]], [5, 4, 7])),
+            Face(Edge().auto(
+                [self.vertices[5], self.vertices[7], self.vertices[6]], [5, 7, 6])),
+            Face(Edge().auto(
+                [self.vertices[4], self.vertices[0], self.vertices[3]], [4, 0, 3])),
+            Face(Edge().auto(
+                [self.vertices[4], self.vertices[3], self.vertices[7]], [4, 3, 7])),
+            Face(Edge().auto(
+                [self.vertices[4], self.vertices[5], self.vertices[1]], [4, 5, 1])),
+            Face(Edge().auto(
+                [self.vertices[4], self.vertices[1], self.vertices[0]], [4, 1, 0])),
+            Face(Edge().auto(
+                [self.vertices[3], self.vertices[2], self.vertices[6]], [3, 2, 6])),
+            Face(Edge().auto(
+                [self.vertices[3], self.vertices[6], self.vertices[7]], [3, 6, 7])),
         ]
+        super().__init__(faces=self.faces, vertices=self.vertices)
