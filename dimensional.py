@@ -2,6 +2,33 @@ import copy
 import numpy as np
 
 
+def dot(one, two):
+    Ax = one[0]
+    Ay = one[1]
+    Az = one[2]
+    Bx = two[0]
+    By = two[1]
+    Bz = two[2]
+    return(Ax*Bx+Ay*By+Az*Bz)
+
+
+def cross(one, two):
+    Ax = one[0]
+    Ay = one[1]
+    Az = one[2]
+    Bx = two[0]
+    By = two[1]
+    Bz = two[2]
+    return([Ay*Bz-Az*By, Az*Bx-Ax*Bz, Ax*By-Ay*Bx])
+
+
+def normalize(triplet):
+    tr = triplet
+    sumtr = (tr[0]**2+tr[1]**2+tr[2]**2)**0.5
+    sumtr = 1/sumtr if sumtr != 0 else 0
+    return([o*sumtr for o in tr])
+
+
 class Vertex():
 
     def __init__(self, array=None):
@@ -201,7 +228,7 @@ class Mesh():
             arr = [l[:-1] for l in obj]
             length = len(arr)
             self.faces = []
-            vertices = []
+            self.vertices = []
 
             for index, edge in enumerate(arr):
                 if(index*100/length % 5 == 0):
@@ -209,17 +236,15 @@ class Mesh():
                 edge = edge.split()
                 if(6 > len(edge) > 1):
                     if (edge[0] == "v"):
-                        vertices.append(Vertex([float(o) for o in edge[1:]])
-                                        )
+                        self.vertices.append([float(o) for o in edge[1:]])
                     elif(edge[0] == "vn"):
                         pass
                     elif(edge[0] == "vt"):
                         pass
                     elif(edge[0] == "f"):
-                        p4l = [vertices[int(o[0])-1] for o in edge[1:]]
+                        #p4l = [self.vertices[int(o[0])-1] for o in edge[1:]]
                         self.faces.append(
-                            Face(Edge().auto(p4l))
-                        )
+                            [int(o.split('/')[0])-1 for o in edge[1:]])
             return(len(self.faces))
 
     def __iter__(self):
@@ -236,26 +261,19 @@ class Pyramid(Mesh):
         self.faces = []
         side *= 0.5
         self.vertices = [
-            Vertex([-side, -side, -side]),  # 0 left, front, down
-            Vertex([-side, -side, +side]),  # 1 left, back, down
-            Vertex([+side, -side, -side]),  # 2 right, front, down
-            Vertex([+side, -side, +side]),  # 3 right, back, down
-            Vertex([0.0, +side, 0.0]),  # 4 top
+            [-side, -side, -side],  # 0 left, front, down
+            [-side, -side, +side],  # 1 left, back, down
+            [+side, -side, -side],  # 2 right, front, down
+            [+side, -side, +side],  # 3 right, back, down
+            [0.0, +side, 0.0]  # 4 top
         ]
         self.faces = [
-            Face(Edge().auto(
-                [self.vertices[0], self.vertices[2], self.vertices[3]], [0, 2, 3])),
-            Face(Edge().auto(
-                [self.vertices[0], self.vertices[3], self.vertices[1]], [0, 3, 1])),
-            Face(Edge().auto(
-                [self.vertices[0], self.vertices[4], self.vertices[2]], [0, 4, 2])),
-            Face(Edge().auto(
-                [self.vertices[2], self.vertices[4], self.vertices[3]], [2, 4, 3])),
-            Face(Edge().auto(
-                [self.vertices[3], self.vertices[4], self.vertices[1]], [3, 4, 1])),
-            Face(Edge().auto(
-                [self.vertices[1], self.vertices[4], self.vertices[0]], [1, 4, 0])),
-
+            [0, 2, 3],
+            [0, 3, 1],
+            [0, 4, 2],
+            [2, 4, 3],
+            [3, 4, 1],
+            [1, 4, 0]
         ]
 
         super().__init__(faces=self.faces, vertices=self.vertices)
@@ -267,41 +285,29 @@ class Cube(Mesh):
         self.faces = []
         side *= 0.5
         self.vertices = [
-            Vertex([-side, -side, -side]),
-            Vertex([-side, +side, -side]),
-            Vertex([+side, +side, -side]),
-            Vertex([+side, -side, -side]),
-            Vertex([-side, -side, +side]),
-            Vertex([-side, +side, +side]),
-            Vertex([+side, +side, +side]),
-            Vertex([+side, -side, +side])
+            [-side, -side, -side],
+            [-side, +side, -side],
+            [+side, +side, -side],
+            [+side, -side, -side],
+            [-side, -side, +side],
+            [-side, +side, +side],
+            [+side, +side, +side],
+            [+side, -side, +side]
         ]
 
         self.faces = [
             # Edge cant have more than 2 vertices :)
-            Face(Edge().auto(
-                [self.vertices[0], self.vertices[1], self.vertices[2]], [0, 1, 2])),
-            Face(Edge().auto(
-                [self.vertices[0], self.vertices[2], self.vertices[3]], [0, 2, 3])),
-            Face(Edge().auto(
-                [self.vertices[1], self.vertices[5], self.vertices[6]], [1, 5, 6])),
-            Face(Edge().auto(
-                [self.vertices[1], self.vertices[6], self.vertices[2]], [1, 6, 2])),
-            Face(Edge().auto(
-                [self.vertices[5], self.vertices[4], self.vertices[7]], [5, 4, 7])),
-            Face(Edge().auto(
-                [self.vertices[5], self.vertices[7], self.vertices[6]], [5, 7, 6])),
-            Face(Edge().auto(
-                [self.vertices[4], self.vertices[0], self.vertices[3]], [4, 0, 3])),
-            Face(Edge().auto(
-                [self.vertices[4], self.vertices[3], self.vertices[7]], [4, 3, 7])),
-            Face(Edge().auto(
-                [self.vertices[4], self.vertices[5], self.vertices[1]], [4, 5, 1])),
-            Face(Edge().auto(
-                [self.vertices[4], self.vertices[1], self.vertices[0]], [4, 1, 0])),
-            Face(Edge().auto(
-                [self.vertices[3], self.vertices[2], self.vertices[6]], [3, 2, 6])),
-            Face(Edge().auto(
-                [self.vertices[3], self.vertices[6], self.vertices[7]], [3, 6, 7])),
+            [0, 1, 2],
+            [0, 2, 3],
+            [1, 5, 6],
+            [1, 6, 2],
+            [5, 4, 7],
+            [5, 7, 6],
+            [4, 0, 3],
+            [4, 3, 7],
+            [4, 5, 1],
+            [4, 1, 0],
+            [3, 2, 6],
+            [3, 6, 7]
         ]
         super().__init__(faces=self.faces, vertices=self.vertices)
