@@ -46,11 +46,11 @@ def rotateZ(point, elapsed):
 
 
 def rotateY(point, elapsed):
-    rotMatZ[0][0] = np.cos(elapsed)
-    rotMatZ[0][2] = np.sin(elapsed)
-    rotMatZ[2][0] = -np.sin(elapsed)
-    rotMatZ[2][2] = np.cos(elapsed)
-    dot1 = np.matmul(point, rotMatZ)
+    rotMatY[0][0] = np.cos(elapsed)
+    rotMatY[0][2] = np.sin(elapsed)
+    rotMatY[2][0] = -np.sin(elapsed)
+    rotMatY[2][2] = np.cos(elapsed)
+    dot1 = np.matmul(point, rotMatY)
     return(dot1)
 
 
@@ -67,8 +67,7 @@ def rotateX(point, elapsed):
 def sorter(faces, points_arrs):
     faces = copy.deepcopy(faces)
     faces.sort(reverse=True, key=lambda pnts:
-               sum([(points_arrs[indx])[2] for indx in pnts])/len(pnts)
-               )
+               sum([(points_arrs[indx])[2] for indx in pnts])/len(pnts))
     return(faces)
 
 
@@ -80,13 +79,12 @@ def draw(mesh):
     #points_arr = copy.deepcopy(mesh.vertices)
 
     for i, point in enumerate(mesh.vertices):
-        #points_arr[i][2] += 200
 
         rotatedPZ = rotateZ(point, np.pi)
         #rotatedPX = rotateX(rotatedPZ, increment)
         mesh.vertices[i] = rotatedPZ
         pass
-    while(time.time()-sttime < 3):
+    while(time.time()-sttime < 10):
         secRun += fps
         elapsed = time.time()-sttime
         if(elapsed < fps):
@@ -97,15 +95,11 @@ def draw(mesh):
         tempoints = copy.deepcopy(mesh.vertices)
         faces = sorter(mesh.faces, tempoints)
 
-        # print(faces_arr)
-        # print(mesh.vertices)
         for i, point in enumerate(tempoints):
-            #rotatedPZ = rotateZ(point, increment)
-            #rotatedPX = rotateY(point, increment)
-            #tempoints[i] = rotatedPX
-            tempoints[i][2] += 200
-            # print(i,points_arr[i])
-            # pass
+            rotatedPY = rotateY(point, np.pi+np.pi/2)
+            tempoints[i] = rotatedPY
+            tempoints[i][2] += 4
+
         for verticArr in faces:
             pnt1 = tempoints[verticArr[0]]
             pnt2 = tempoints[verticArr[1]]
