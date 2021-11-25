@@ -66,7 +66,7 @@ def rotateX(point, elapsed):
 
 def sorter(faces, points_arrs):
     faces = copy.deepcopy(faces)
-    faces.sort(reverse=True, key=lambda pnts:
+    faces.sort(reverse=False, key=lambda pnts:
                sum([(points_arrs[indx])[2] for indx in pnts])/len(pnts))
     return(faces)
 
@@ -84,7 +84,7 @@ def draw(mesh):
         #rotatedPX = rotateX(rotatedPZ, increment)
         mesh.vertices[i] = rotatedPZ
         pass
-    while(time.time()-sttime < 10):
+    while(time.time()-sttime < 2):
         secRun += fps
         elapsed = time.time()-sttime
         if(elapsed < fps):
@@ -96,9 +96,10 @@ def draw(mesh):
         faces = sorter(mesh.faces, tempoints)
 
         for i, point in enumerate(tempoints):
-            rotatedPY = rotateY(point, np.pi+np.pi/2)
+            rotatedPY = rotateY(point, np.pi)
             tempoints[i] = rotatedPY
-            tempoints[i][2] += 4
+            tempoints[i][2] += 50
+            tempoints[i][1] += 150
 
         for verticArr in faces:
             pnt1 = tempoints[verticArr[0]]
