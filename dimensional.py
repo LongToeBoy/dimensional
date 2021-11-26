@@ -2,6 +2,47 @@ import copy
 import numpy as np
 
 
+projMat = np.zeros(16).reshape((4, 4))
+rotMatZ = np.zeros(9).reshape((3, 3))
+rotMatX = np.zeros(9).reshape((3, 3))
+rotMatY = np.zeros(9).reshape((3, 3))
+rotMatZ[2][2] = 1
+rotMatX[0][0] = 1
+rotMatY[1][1] = 1
+projMat[0][0] = 1*1/np.tan(90*np.pi/360)
+projMat[1][1] = 1/np.tan(90*np.pi/360)
+projMat[2][2] = 1000.0/(1000-0.1)
+projMat[3][2] = (-1000*0.1)/(1000-0.1)
+projMat[2][3] = 1.0
+
+
+def rotateX(point, elapsed):
+    rotMatX[1][1] = np.cos(elapsed)
+    rotMatX[1][2] = np.sin(elapsed)
+    rotMatX[2][1] = -np.sin(elapsed)
+    rotMatX[2][2] = np.cos(elapsed)
+    dot1 = np.matmul(point, rotMatX)
+    return(dot1)
+
+
+def rotateY(point, elapsed):
+    rotMatY[0][0] = np.cos(elapsed)
+    rotMatY[0][2] = np.sin(elapsed)
+    rotMatY[2][0] = -np.sin(elapsed)
+    rotMatY[2][2] = np.cos(elapsed)
+    dot1 = np.matmul(point, rotMatY)
+    return(dot1)
+
+
+def rotateZ(point, elapsed):
+    rotMatZ[0][0] = np.cos(elapsed)
+    rotMatZ[0][1] = np.sin(elapsed)
+    rotMatZ[1][0] = -np.sin(elapsed)
+    rotMatZ[1][1] = np.cos(elapsed)
+    dot1 = np.matmul(point, rotMatZ)
+    return(dot1)
+
+
 def dot(one, two):
     Ax = one[0]
     Ay = one[1]
@@ -29,12 +70,28 @@ def normalize(triplet):
     return([o*sumtr for o in tr])
 
 
+class World():
+    def __init__(self, aspectRatio=1.0, fFov=90, fFar=1000, fNear=0.1):
+        fFovRad = 1/np.tan(fFov*np.pi/360)
+        projMat[0][0] = aspectRatio*fFovRad
+        projMat[1][1] = fFovRad
+        projMat[2][2] = fFar/(fFar-fNear)
+        projMat[3][2] = (-fFar*fNear)/(fFar-fNear)
+
+
 class Mesh():
 
     def __init__(self, faces=[], vertices=[]):
         self.faces = faces
         self.vertices = vertices
         self.iterVar = None
+
+    def __iter__(self):
+        self.iterVar = iter(self.faces)
+        return(self.iterVar)
+
+    def __next__(self):
+        return(next(self.iterVar))
 
     def load(self, obj):
         with open(obj, "r") as obj:
@@ -55,17 +112,32 @@ class Mesh():
                     elif(edge[0] == "vt"):
                         pass
                     elif(edge[0] == "f"):
-                        #p4l = [self.vertices[int(o[0])-1] for o in edge[1:]]
                         self.faces.append(
                             [int(o.split('/')[0])-1 for o in edge[1:]])
             return(len(self.faces))
 
-    def __iter__(self):
-        self.iterVar = iter(self.faces)
-        return(self.iterVar)
+    def sorter(self, faces, points_arrs):
+        faces = copy.deepcopy(faces)
+        faces.sort(reverse=False, key=lambda pnts:
+                   sum([(points_arrs[indx])[2] for indx in pnts])/len(pnts))
+        return(faces)
 
-    def __next__(self):
-        return(next(self.iterVar))
+    def push(self, pushAr):
+        x, y, z = pushAr
+        for i in range(len(self.vertices)):
+            self.vertices[i][0] += x
+            self.vertices[i][1] += y
+            self.vertices[i][2] += z
+
+    def rotateZ(self, angle):
+        for i, point in enumerate(self.vertices):
+            rotatedPZ = rotateZ(point, angle)
+            self.vertices[i] = rotatedPZ
+
+    def rotateY(self, angle):
+        for i, point in enumerate(self.vertices):
+            rotatedPY = rotateY(point, angle)
+            self.vertices[i] = rotatedPY
 
 
 class Pyramid(Mesh):

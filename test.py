@@ -21,54 +21,7 @@ fNear = 0.1
 fFar = 1000.0
 fFov = 90.0
 aspectRatio = HEIGHT*1.0/WIDTH
-fFovRad = 1/np.tan(fFov*np.pi/360)
-projMat = np.zeros(16).reshape((4, 4))
-projMat[0][0] = aspectRatio*fFovRad
-projMat[1][1] = fFovRad
-projMat[2][2] = fFar/(fFar-fNear)
-projMat[3][2] = (-fFar*fNear)/(fFar-fNear)
-projMat[2][3] = 1.0
-rotMatZ = np.zeros(9).reshape((3, 3))
-rotMatX = np.zeros(9).reshape((3, 3))
-rotMatY = np.zeros(9).reshape((3, 3))
-rotMatZ[2][2] = 1
-rotMatX[0][0] = 1
-rotMatY[1][1] = 1
-
-
-def rotateZ(point, elapsed):
-    rotMatZ[0][0] = np.cos(elapsed)
-    rotMatZ[0][1] = np.sin(elapsed)
-    rotMatZ[1][0] = -np.sin(elapsed)
-    rotMatZ[1][1] = np.cos(elapsed)
-    dot1 = np.matmul(point, rotMatZ)
-    return(dot1)
-
-
-def rotateY(point, elapsed):
-    rotMatY[0][0] = np.cos(elapsed)
-    rotMatY[0][2] = np.sin(elapsed)
-    rotMatY[2][0] = -np.sin(elapsed)
-    rotMatY[2][2] = np.cos(elapsed)
-    dot1 = np.matmul(point, rotMatY)
-    return(dot1)
-
-
-def rotateX(point, elapsed):
-    rotMatX[1][1] = np.cos(elapsed)
-    rotMatX[1][2] = np.sin(elapsed)
-    rotMatX[2][1] = -np.sin(elapsed)
-    rotMatX[2][2] = np.cos(elapsed)
-
-    dot1 = np.matmul(point, rotMatX)
-    return(dot1)
-
-
-def sorter(faces, points_arrs):
-    faces = copy.deepcopy(faces)
-    faces.sort(reverse=False, key=lambda pnts:
-               sum([(points_arrs[indx])[2] for indx in pnts])/len(pnts))
-    return(faces)
+world = World(aspectRatio, fFov, fFar, fNear)
 
 
 def draw(mesh):
@@ -78,12 +31,8 @@ def draw(mesh):
     fps = 1/10.0
     #points_arr = copy.deepcopy(mesh.vertices)
 
-    for i, point in enumerate(mesh.vertices):
-
-        rotatedPZ = rotateZ(point, np.pi)
-        #rotatedPX = rotateX(rotatedPZ, increment)
-        mesh.vertices[i] = rotatedPZ
-        pass
+    mesh.rotateZ(np.pi)
+        
     while(time.time()-sttime < 2):
         secRun += fps
         elapsed = time.time()-sttime
@@ -92,19 +41,16 @@ def draw(mesh):
             sttime = time.time()
         canvas.delete("all")
         increment = (secRun)
-        tempoints = copy.deepcopy(mesh.vertices)
-        faces = sorter(mesh.faces, tempoints)
+        tempoints = copy.deepcopy(mesh)
+        faces = mesh.sorter(mesh.faces, tempoints.vertices)
 
-        for i, point in enumerate(tempoints):
-            rotatedPY = rotateY(point, np.pi)
-            tempoints[i] = rotatedPY
-            tempoints[i][2] += 50
-            tempoints[i][1] += 150
+        tempoints.rotateY(np.pi)
+        tempoints.push([0,0,3])
 
         for verticArr in faces:
-            pnt1 = tempoints[verticArr[0]]
-            pnt2 = tempoints[verticArr[1]]
-            pnt3 = tempoints[verticArr[2]]
+            pnt1 = tempoints.vertices[verticArr[0]]
+            pnt2 = tempoints.vertices[verticArr[1]]
+            pnt3 = tempoints.vertices[verticArr[2]]
             line1 = [pnt2[0]-pnt1[0], pnt2[1]-pnt1[1], pnt2[2]-pnt1[2]]
             line2 = [pnt3[0]-pnt2[0], pnt3[1]-pnt2[1], pnt3[2]-pnt2[2]]
             cP = cross(line1, line2)
@@ -112,7 +58,7 @@ def draw(mesh):
             nmlDot = dot(normal, pnt3)
             # print(normal.dot(Vertex([0,0,-1])))
             points = [np.append(p, [1])
-                      for p in [tempoints[o] for o in verticArr]]
+                      for p in [tempoints.vertices[o] for o in verticArr]]
 
             # print("points",points)
             if(nmlDot < 0):
@@ -138,7 +84,7 @@ def draw(mesh):
 
 polygons = Cube(side=2.0)
 # print(polygons.faces)
-polygons.load(askopenfilename(initialdir="/"))
+#polygons.load(askopenfilename(initialdir="/"))
 t = Thread(target=draw, args=(polygons,))
 t.start()
 
